@@ -1,0 +1,5 @@
+{
+  "name": "Keep Carousel",
+  "description": "A Google Keep clone with multiple view modes including a dynamic carousel.",
+  "requestFramePermissions": []
+}
