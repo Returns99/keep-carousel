@@ -46,13 +46,10 @@ export default function App() {
     fetchNotes();
   }, []);
 
-  const fetchNotes = async () => {
-    try {
-      const res = await fetch('/api/notes');
-      const data = await res.json();
-      setNotes(data);
-    } catch (err) {
-      console.error('Failed to fetch notes', err);
+  const fetchNotes = () => {
+    const saved = localStorage.getItem('keep_notes');
+    if (saved) {
+      setNotes(JSON.parse(saved));
     }
   };
 
@@ -62,40 +59,34 @@ export default function App() {
       return;
     }
     const id = crypto.randomUUID();
-    try {
-      await fetch('/api/notes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...newNote, id }),
-      });
-      setNewNote({ title: '', content: '', color: 'bg-white', is_pinned: 0 });
-      setIsCreating(false);
-      fetchNotes();
-    } catch (err) {
-      console.error('Failed to create note', err);
-    }
+    const noteToAdd: Note = { 
+      ...newNote, 
+      id, 
+      is_archived: 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString() 
+    };
+    
+    const updatedNotes = [noteToAdd, ...notes];
+    setNotes(updatedNotes);
+    localStorage.setItem('keep_notes', JSON.stringify(updatedNotes));
+    
+    setNewNote({ title: '', content: '', color: 'bg-white', is_pinned: 0 });
+    setIsCreating(false);
   };
 
   const handleUpdateNote = async (id: string, updates: Partial<Note>) => {
-    try {
-      await fetch(`/api/notes/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates),
-      });
-      fetchNotes();
-    } catch (err) {
-      console.error('Failed to update note', err);
-    }
+    const updatedNotes = notes.map(n => 
+      n.id === id ? { ...n, ...updates, updated_at: new Date().toISOString() } : n
+    );
+    setNotes(updatedNotes);
+    localStorage.setItem('keep_notes', JSON.stringify(updatedNotes));
   };
 
   const handleDeleteNote = async (id: string) => {
-    try {
-      await fetch(`/api/notes/${id}`, { method: 'DELETE' });
-      fetchNotes();
-    } catch (err) {
-      console.error('Failed to delete note', err);
-    }
+    const updatedNotes = notes.filter(n => n.id !== id);
+    setNotes(updatedNotes);
+    localStorage.setItem('keep_notes', JSON.stringify(updatedNotes));
   };
 
   const filteredNotes = notes.filter(n => 
